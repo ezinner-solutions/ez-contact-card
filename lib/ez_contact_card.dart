@@ -3,83 +3,183 @@ library ez_contact_card;
 import 'package:ez_circle_avatar/ez_circle_avatar.dart';
 import 'package:flutter/material.dart';
 
-/// A card that displays an avatar, a name, an optional subtitle, and a tail widget.
+/// The visual design variant for an [EzContactCard].
 ///
-/// The [EzContactCard] is a stateless widget that composes these elements into a
-/// horizontal layout:
+/// Variants provide opinionated Material 3 card styling out of the box,
+/// eliminating boilerplate while still permitting full per-property overrides.
+enum EzContactCardVariant {
+  /// An elevated card with a subtle shadow and surface container color.
+  ///
+  /// This is the default variant. It adheres to Material 3 elevated card guidelines.
+  elevated,
+
+  /// A filled card with a distinct surface container fill and no shadow.
+  ///
+  /// Adheres to Material 3 filled card guidelines.
+  filled,
+
+  /// An outlined card with a subtle border and no shadow.
+  ///
+  /// Adheres to Material 3 outlined card guidelines.
+  outlined,
+
+  /// An unstyled, transparent card container without background, border, or shadow.
+  ///
+  /// Useful when wrapping in a custom outer container or when an unopinionated
+  /// layout is required.
+  none,
+}
+
+/// A customizable, composition-based contact card widget with built-in Material 3
+/// design enforcement, automatic avatar generation, and defensive text handling.
 ///
-/// * [avatar]: Displayed on the left.
-/// * [name]: The primary text, displayed in a column.
-/// * [subtitle]: Optional secondary text below the name.
-/// * [tail]: Optional widget displayed on the right.
+/// The [EzContactCard] serves as an opinionated, drop-in replacement for standard
+/// [ListTile] or [Card]-wrapped list rows, composing:
+///
+/// * **Avatar / Leading:** Displayed on the far left. If omitted, automatically
+///   generates an [EzCircleAvatar] from [name].
+/// * **Headline / Title:** The primary headline text, or custom [title] widget.
+/// * **Subtitle:** Optional secondary text beneath the headline.
+/// * **Tail / Trailing:** Optional action widget displayed on the far right (e.g., an icon or button).
+///
+/// ## Features
+///
+/// * **Design Enforcement:** Built-in [EzContactCardVariant] support (elevated,
+///   filled, outlined, or none) providing polished Material 3 card aesthetics out of the box.
+/// * **Drop-in Compatibility:** Provides standard Flutter parameter aliases ([leading],
+///   [trailing], [title], [enabled], [dense]) for seamless replacement of [ListTile].
+/// * **Automatic Avatar:** If no [avatar] or [leading] widget is provided, an [EzCircleAvatar]
+///   is automatically created from [name] with deterministic coloring and initials extraction.
+/// * **Defensive Layout:** Text columns are wrapped in [Expanded] with ellipsis truncation,
+///   preventing horizontal layout overflows on narrow screens.
+/// * **Interactive & Accessible:** Full gesture support ([onTap], [onLongPress]) with
+///   rounded ink ripples and screen-reader [Semantics] labeling.
 ///
 /// ## Layout algorithm
 ///
-/// The widget uses a [Row] to align its children. The text column is wrapped in
-/// an [Expanded] widget to ensure that long names or subtitles are truncated
-/// with an ellipsis instead of causing a layout overflow.
+/// The widget renders inside a [Container] with decoration resolved by [_EzContactCardHelper].
+/// Inside the container, a [Material] widget hosts an [InkWell] clipped to the card's
+/// border radius. The content is laid out horizontally via [Row]:
 ///
-/// The spacing between the avatar, text column, and tail is controlled by the [gap]
-/// property. The vertical alignment of the row is controlled by [verticalAlignment].
+/// 1. An optional leading avatar widget (or automatically generated [EzCircleAvatar]).
+/// 2. An [Expanded] vertical [Column] holding headline and subtitle text.
+/// 3. An optional trailing tail widget.
+///
+/// The spacing between children is controlled by [gap] (or a compact gap when [dense] is true).
+/// Vertical alignment across the row is governed by [verticalAlignment].
 ///
 /// ## Styling
 ///
-/// The card's container can be customized using [decoration] for background, borders,
-/// and shadows, and [margin] for external spacing. The [contentPadding] property
-/// controls the internal spacing around the content.
-///
-/// Text styles can be customized via [nameStyle] and [subtitleStyle]. If not provided,
-/// they use sensible defaults from the current [Theme].
+/// Card appearance can be controlled at three levels of specificity:
+/// 1. **Variant:** Choose [EzContactCardVariant.elevated], [EzContactCardVariant.filled],
+///    [EzContactCardVariant.outlined], or [EzContactCardVariant.none].
+/// 2. **Shorthand visual properties:** Override [backgroundColor], [border],
+///    [borderRadius], [elevation], or [contentPadding].
+/// 3. **Full decoration:** Supply a custom [decoration] to take absolute control.
 ///
 /// ## Examples
 ///
-/// ### Basic usage
+/// ### Minimal (Auto-Avatar & Material Card)
 ///
 /// ```dart
 /// EzContactCard(
 ///   name: 'Jane Doe',
-///   avatar: EzCircleAvatar(name: 'Jane Doe'),
 /// )
 /// ```
 ///
-/// ### Styled with action
+/// ### Drop-in replacement with subtitle and action
 ///
 /// ```dart
 /// EzContactCard(
 ///   name: 'John Smith',
 ///   subtitle: 'Software Engineer',
-///   avatar: EzCircleAvatar(name: 'John Smith'),
-///   tail: IconButton(
+///   trailing: IconButton(
 ///     icon: const Icon(Icons.phone),
 ///     onPressed: () {},
 ///   ),
-///   decoration: BoxDecoration(
-///     color: Colors.white,
-///     borderRadius: BorderRadius.circular(12),
-///     boxShadow: const [
-///       BoxShadow(blurRadius: 4, color: Colors.black12),
-///     ],
-///   ),
+///   onTap: () {},
+/// )
+/// ```
+///
+/// ### Outlined variant with dense spacing
+///
+/// ```dart
+/// EzContactCard(
+///   name: 'Alice Johnson',
+///   subtitle: 'Product Designer',
+///   variant: EzContactCardVariant.outlined,
+///   dense: true,
+///   onTap: () {},
 /// )
 /// ```
 ///
 /// See also:
 ///
-///  * [EzCircleAvatar], which is commonly used as the avatar widget.
-///  * [ListTile], a standard Flutter widget with a similar layout.
+///  * [EzCircleAvatar], the companion avatar widget automatically generated by this card.
+///  * [ListTile], the standard Flutter list item widget.
+///  * [Card], the standard Material card container.
 class EzContactCard extends StatelessWidget {
   /// The name to display as the main headline.
+  ///
+  /// When [avatar] and [leading] are omitted and [showAvatar] is true, this name
+  /// is also forwarded to [EzCircleAvatar] to automatically generate initials
+  /// and a deterministic background color.
+  ///
+  /// Defaults to an empty string.
   final String name;
 
-  /// An optional subtitle to display below the name.
+  /// An optional subtitle to display below the headline.
   final String? subtitle;
 
   /// The avatar widget to display on the left.
-  /// Usually an [EzCircleAvatar].
-  final Widget avatar;
+  ///
+  /// If `null`, [leading] is checked. If both are `null` and [showAvatar] is `true`,
+  /// an [EzCircleAvatar] is automatically constructed using [name].
+  final Widget? avatar;
+
+  /// Drop-in alias for [avatar] to match standard [ListTile] nomenclature.
+  ///
+  /// Takes effect only if [avatar] is `null`.
+  final Widget? leading;
 
   /// An optional widget to display on the right side (e.g., an icon or button).
   final Widget? tail;
+
+  /// Drop-in alias for [tail] to match standard [ListTile] nomenclature.
+  ///
+  /// Takes effect only if [tail] is `null`.
+  final Widget? trailing;
+
+  /// An optional custom widget to display in place of the headline text.
+  ///
+  /// If provided, this overrides the default [Text] widget rendered from [name].
+  final Widget? title;
+
+  /// Whether to display an avatar when [avatar] and [leading] are omitted.
+  ///
+  /// Defaults to `true`. Set to `false` if you want a card without a leading avatar.
+  final bool showAvatar;
+
+  /// The visual design variant of the card.
+  ///
+  /// Defaults to [EzContactCardVariant.elevated].
+  final EzContactCardVariant variant;
+
+  /// Whether this contact card uses compact padding and smaller gaps.
+  ///
+  /// Defaults to `false`. When `true`, padding defaults to `12.0` horizontal and `8.0` vertical,
+  /// and the gap between items defaults to `12.0`.
+  final bool dense;
+
+  /// Whether this card is enabled for user interaction.
+  ///
+  /// Defaults to `true`. When `false`, gestures are disabled and the visual opacity is reduced.
+  final bool enabled;
+
+  /// The semantic label for accessibility (screen readers).
+  ///
+  /// If `null`, an automatic label is computed from [name] and [subtitle].
+  final String? semanticLabel;
 
   // --- Interaction ---
 
@@ -104,49 +204,64 @@ class EzContactCard extends StatelessWidget {
   // --- Container Styling ---
 
   /// The decoration to paint behind the child.
-  /// Use this to add background color, border, borderRadius, box shadow, etc.
-  /// If [decoration] is provided, [backgroundColor], [border], [borderRadius],
-  /// and [elevation] are ignored.
+  ///
+  /// Use this to add custom background color, gradients, borders, border radius,
+  /// or box shadows. If [decoration] is provided, it completely overrides
+  /// the [variant] styling and shorthand visual properties.
   final BoxDecoration? decoration;
 
   /// The background color of the card.
+  ///
+  /// Overrides the default background color provided by [variant].
   /// Ignored if [decoration] is provided.
   final Color? backgroundColor;
 
   /// The border to draw around the card.
+  ///
+  /// Overrides the default border provided by [variant].
   /// Ignored if [decoration] is provided.
   final Border? border;
 
   /// The border radius of the card's corners.
+  ///
+  /// Overrides the default border radius (12.0).
   /// Ignored if [decoration] is provided.
   final BorderRadiusGeometry? borderRadius;
 
-  /// The elevation of the card, which controls the size of the shadow.
-  /// Defaults to 0. Ignored if [decoration] is provided.
-  final double elevation;
+  /// The elevation of the card, controlling the size of the shadow.
+  ///
+  /// Overrides the default elevation provided by [variant].
+  /// Ignored if [decoration] is provided.
+  final double? elevation;
 
-  /// Empty space to surround the [decoration] and child.
+  /// Empty space to surround the card container.
   final EdgeInsetsGeometry? margin;
 
   /// The padding for the content inside the card.
-  /// Defaults to `EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)`.
-  final EdgeInsetsGeometry contentPadding;
+  ///
+  /// If `null`, defaults to `EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)`
+  /// (or `EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)` if [dense] is `true`).
+  final EdgeInsetsGeometry? contentPadding;
 
-  /// The clip behavior when [decoration] is not null.
-  /// Defaults to [Clip.hardEdge].
+  /// The clip behavior for the card container.
+  ///
+  /// Defaults to [Clip.antiAlias] to cleanly clip ink ripples and backgrounds.
   final Clip clipBehavior;
 
   // --- Text Styling ---
 
-  /// The style to use for the name text.
-  /// If null, defaults to `Theme.of(context).textTheme.titleMedium` with `FontWeight.w500`.
+  /// The style to use for the headline text.
+  ///
+  /// If `null`, defaults to `Theme.of(context).textTheme.titleMedium` with `FontWeight.w600`.
   final TextStyle? nameStyle;
 
   /// The style to use for the subtitle text.
-  /// If null, defaults to `Theme.of(context).textTheme.bodyMedium` with `ColorScheme.onSurfaceVariant`.
+  ///
+  /// If `null`, defaults to `Theme.of(context).textTheme.bodyMedium` with
+  /// `ColorScheme.onSurfaceVariant`.
   final TextStyle? subtitleStyle;
 
-  /// The maximum number of lines for the name. Defaults to 1.
+  /// The maximum number of lines for the headline. Defaults to 1.
   final int nameMaxLines;
 
   /// The maximum number of lines for the subtitle. Defaults to 1.
@@ -154,11 +269,13 @@ class EzContactCard extends StatelessWidget {
 
   // --- Layout ---
 
-  /// The gap between the avatar, the text column, and the tail.
-  /// Defaults to 16.0.
-  final double gap;
+  /// The gap between the avatar, the text column, and the tail widget.
+  ///
+  /// If `null`, defaults to 16.0 (or 12.0 if [dense] is `true`).
+  final double? gap;
 
-  /// How the children should be placed along the cross axis.
+  /// How the children should be placed along the cross axis in the row.
+  ///
   /// Defaults to [CrossAxisAlignment.center].
   final CrossAxisAlignment verticalAlignment;
 
@@ -166,10 +283,20 @@ class EzContactCard extends StatelessWidget {
   const EzContactCard({
     super.key,
     // Content
-    required this.name,
+    this.name = '',
     this.subtitle,
-    required this.avatar,
+    this.avatar,
+    this.leading,
     this.tail,
+    this.trailing,
+    this.title,
+    this.showAvatar = true,
+
+    // Design & Layout behavior
+    this.variant = EzContactCardVariant.elevated,
+    this.dense = false,
+    this.enabled = true,
+    this.semanticLabel,
 
     // Interaction
     this.onTap,
@@ -184,11 +311,10 @@ class EzContactCard extends StatelessWidget {
     this.backgroundColor,
     this.border,
     this.borderRadius,
-    this.elevation = 0,
+    this.elevation,
     this.margin,
-    this.contentPadding =
-        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-    this.clipBehavior = Clip.hardEdge,
+    this.contentPadding,
+    this.clipBehavior = Clip.antiAlias,
 
     // Text Styling
     this.nameStyle,
@@ -197,88 +323,231 @@ class EzContactCard extends StatelessWidget {
     this.subtitleMaxLines = 1,
 
     // Layout
-    this.gap = 16.0,
+    this.gap,
     this.verticalAlignment = CrossAxisAlignment.center,
   });
 
   @override
   Widget build(BuildContext context) {
-    final BoxDecoration effectiveDecoration = decoration ??
-        BoxDecoration(
-          color: backgroundColor,
-          border: border,
-          borderRadius: borderRadius,
-          boxShadow: elevation > 0
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: elevation,
-                    offset: Offset(0, elevation / 2),
-                  ),
-                ]
-              : null,
+    final theme = Theme.of(context);
+    final effectiveDecoration = _EzContactCardHelper.resolveDecoration(
+      context: context,
+      variant: variant,
+      decoration: decoration,
+      backgroundColor: backgroundColor,
+      border: border,
+      borderRadius: borderRadius,
+      elevation: elevation,
+    );
+
+    final effectiveGap = gap ?? (dense ? 12.0 : 16.0);
+    final effectivePadding = contentPadding ??
+        (dense
+            ? const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0)
+            : const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0));
+
+    final effectiveLeading =
+        avatar ?? leading ?? (showAvatar ? EzCircleAvatar(name: name) : null);
+
+    final effectiveTrailing = tail ?? trailing;
+
+    final effectiveTitle = title ??
+        Text(
+          name,
+          style: (nameStyle ??
+                  theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ))
+              ?.copyWith(
+            color: enabled ? null : theme.disabledColor,
+          ),
+          maxLines: nameMaxLines,
+          overflow: TextOverflow.ellipsis,
         );
 
-    return Container(
+    final effectiveSubtitle = subtitle != null
+        ? Text(
+            subtitle!,
+            style: (subtitleStyle ??
+                    theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ))
+                ?.copyWith(
+              color: enabled ? null : theme.disabledColor,
+            ),
+            maxLines: subtitleMaxLines,
+            overflow: TextOverflow.ellipsis,
+          )
+        : null;
+
+    final inkBorderRadius = effectiveDecoration.borderRadius is BorderRadius
+        ? effectiveDecoration.borderRadius as BorderRadius
+        : null;
+
+    Widget content = Padding(
+      padding: effectivePadding,
+      child: Row(
+        crossAxisAlignment: verticalAlignment,
+        children: [
+          if (effectiveLeading != null) ...[
+            effectiveLeading,
+            SizedBox(width: effectiveGap),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                effectiveTitle,
+                if (effectiveSubtitle != null) ...[
+                  const SizedBox(height: 4),
+                  effectiveSubtitle,
+                ],
+              ],
+            ),
+          ),
+          if (effectiveTrailing != null) ...[
+            SizedBox(width: effectiveGap),
+            effectiveTrailing,
+          ],
+        ],
+      ),
+    );
+
+    if (!enabled) {
+      content = Opacity(
+        opacity: 0.6,
+        child: content,
+      );
+    }
+
+    final cardWidget = Container(
       margin: margin,
       decoration: effectiveDecoration,
       clipBehavior: clipBehavior,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
+          onTap: enabled ? onTap : null,
+          onLongPress: enabled ? onLongPress : null,
+          borderRadius: inkBorderRadius,
           splashColor: splashColor,
           highlightColor: highlightColor,
           hoverColor: hoverColor,
           focusColor: focusColor,
-          child: Padding(
-            padding: contentPadding,
-            child: Row(
-              crossAxisAlignment: verticalAlignment,
-              children: [
-                avatar,
-                SizedBox(width: gap),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        name,
-                        style: nameStyle ??
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                        maxLines: nameMaxLines,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle!,
-                          style: subtitleStyle ??
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                          maxLines: subtitleMaxLines,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (tail != null) ...[
-                  SizedBox(width: gap),
-                  tail!,
-                ],
-              ],
-            ),
-          ),
+          child: content,
         ),
       ),
     );
+
+    final effectiveSemanticLabel = _EzContactCardHelper.resolveSemanticLabel(
+      name: name,
+      subtitle: subtitle,
+      semanticLabel: semanticLabel,
+    );
+
+    return Semantics(
+      label: effectiveSemanticLabel,
+      button: enabled && (onTap != null || onLongPress != null),
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
+      onLongPress: enabled ? onLongPress : null,
+      container: true,
+      excludeSemantics: true,
+      child: cardWidget,
+    );
+  }
+}
+
+/// Internal helper for [EzContactCard] decoration resolution and accessibility labeling.
+abstract final class _EzContactCardHelper {
+  /// Resolves the effective [BoxDecoration] for the given [variant], [context], and overrides.
+  static BoxDecoration resolveDecoration({
+    required BuildContext context,
+    required EzContactCardVariant variant,
+    BoxDecoration? decoration,
+    Color? backgroundColor,
+    Border? border,
+    BorderRadiusGeometry? borderRadius,
+    double? elevation,
+  }) {
+    if (decoration != null) {
+      return decoration;
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardTheme = theme.cardTheme;
+
+    final Color defaultBgColor;
+    final Border? defaultBorder;
+    final double defaultElevation;
+
+    switch (variant) {
+      case EzContactCardVariant.elevated:
+        defaultBgColor = cardTheme.color ?? colorScheme.surfaceContainerLow;
+        defaultBorder = null;
+        defaultElevation = cardTheme.elevation ?? 1.0;
+        break;
+      case EzContactCardVariant.filled:
+        defaultBgColor = colorScheme.surfaceContainerHighest;
+        defaultBorder = null;
+        defaultElevation = 0.0;
+        break;
+      case EzContactCardVariant.outlined:
+        defaultBgColor = cardTheme.color ?? colorScheme.surface;
+        defaultBorder = Border.all(
+          color: colorScheme.outlineVariant,
+          width: 1.0,
+        );
+        defaultElevation = 0.0;
+        break;
+      case EzContactCardVariant.none:
+        defaultBgColor = Colors.transparent;
+        defaultBorder = null;
+        defaultElevation = 0.0;
+        break;
+    }
+
+    final effectiveColor = backgroundColor ?? defaultBgColor;
+    final effectiveBorder = border ?? defaultBorder;
+    final effectiveRadius = borderRadius ?? BorderRadius.circular(12.0);
+    final effectiveElevation = elevation ?? defaultElevation;
+
+    return BoxDecoration(
+      color: effectiveColor,
+      border: effectiveBorder,
+      borderRadius: effectiveRadius,
+      boxShadow: effectiveElevation > 0
+          ? [
+              BoxShadow(
+                color: cardTheme.shadowColor ??
+                    Colors.black.withValues(alpha: 0.08),
+                blurRadius: effectiveElevation,
+                offset: Offset(0, effectiveElevation / 2),
+              ),
+            ]
+          : null,
+    );
+  }
+
+  /// Resolves the semantic accessibility label from [name], [subtitle], and explicit [semanticLabel].
+  static String resolveSemanticLabel({
+    required String name,
+    required String? subtitle,
+    required String? semanticLabel,
+  }) {
+    if (semanticLabel != null) {
+      return semanticLabel;
+    }
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      return 'Contact Card';
+    }
+    final trimmedSubtitle = subtitle?.trim();
+    if (trimmedSubtitle != null && trimmedSubtitle.isNotEmpty) {
+      return '$trimmedName, $trimmedSubtitle';
+    }
+    return trimmedName;
   }
 }

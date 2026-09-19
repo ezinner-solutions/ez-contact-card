@@ -1,6 +1,6 @@
 name: ez_contact_card
-description: A customizable contact card widget composed of an avatar, name, subtitle, and an optional tail widget.
-version: 0.0.3
+description: A defensive, accessible, and customizable Flutter contact card widget with Material 3 design enforcement, automatic avatar generation, and drop-in ListTile compatibility.
+version: 0.0.4
 homepage: https://github.com/Evgenii-Zinner/ez-contact-card
 repository: https://github.com/Evgenii-Zinner/ez-contact-card
 issue_tracker: https://github.com/Evgenii-Zinner/ez-contact-card/issues
