@@ -4,7 +4,6 @@ A defensive, accessible Flutter contact card with Material 3 styling variants, a
 
 [![pub package](https://img.shields.io/pub/v/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
 [![likes](https://img.shields.io/pub/likes/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
-[![popularity](https://img.shields.io/pub/popularity/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
 [![pub points](https://img.shields.io/pub/points/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
