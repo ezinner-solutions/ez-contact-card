@@ -1,148 +1,148 @@
-# EZ Contact Card
+# EzContactCard
 
-A **customizable, composition-based** Flutter contact card widget with built-in **Material 3 design enforcement**, **automatic avatar generation**, and **drop-in ListTile compatibility**.
+A defensive, accessible Flutter contact card with Material 3 styling variants, automated avatar generation, overflow prevention, and drop-in `ListTile` compatibility.
 
-## 🛑 The Problem
+[![pub package](https://img.shields.io/pub/v/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
+[![likes](https://img.shields.io/pub/likes/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
+[![popularity](https://img.shields.io/pub/popularity/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
+[![pub points](https://img.shields.io/pub/points/ez_contact_card.svg)](https://pub.dev/packages/ez_contact_card)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Building list items or contact cards in Flutter often results in repetitive, messy boilerplate:
-1.  **Duplicate Layouts:** You constantly rewrite the same `Card` -> `InkWell` -> `Row` -> `Avatar` -> `Column` -> `Text` hierarchy.
-2.  **Inconsistent Styling:** Cards look flat or unstyled unless manually given `BoxDecoration`, `BorderRadius`, and shadows.
-3.  **Avatar Boilerplate:** Having to manually configure an avatar widget with initials and colors for every contact row slows down development.
-4.  **Handling Overflows:** Forgetting to wrap labels with `Expanded` and text ellipsis causes ugly yellow-and-black pixel overflows on smaller screens.
-5.  **ListTile Rigidity:** Standard `ListTile` is hard to theme as a modern card and lacks automatic initials and contrast management.
+## Problem Statement
 
-## ✅ The EZ Solution
+Building user contact cards or list rows in Flutter involves repetitive layout boilerplate:
 
-`EzContactCard` solves all of these pain points out of the box:
--   **Enforced Design Solutions:** Built-in Material 3 card styling variants (`elevated`, `filled`, `outlined`, `none`) that automatically pull surface colors, borders, and elevations from your app's `Theme`.
--   **Automatic Smart Avatar:** If you don't supply an avatar, it automatically constructs an `EzCircleAvatar` from `name` with deterministic colors and initials!
--   **Drop-in ListTile Replacement:** Supports familiar parameters (`leading`, `trailing`, `title`, `dense`, `enabled`) so you can swap existing `ListTile` or `Card` widgets with zero friction.
--   **Defensive Design:** Automatic text truncation prevents horizontal layout overflows.
--   **Accessible:** Automatic screen-reader `Semantics` label calculation for high accessibility standards.
--   **Total Styling Control:** Keep opinionated defaults or fully customize backgrounds, borders, shadows, margins, and text styles.
+1. **Repetitive Layout Nesting:** Assembling `Card` -> `InkWell` -> `Padding` -> `Row` -> `Avatar` -> `Column` -> `Text` manually for every contact row.
+2. **Text Overflow Exceptions:** Forgetting to wrap text columns in `Expanded` or configure text ellipsis causes pixel overflows on narrow screens (`"A RenderFlex overflowed by ... pixels on the right"`).
+3. **Manual Avatar Wiring:** Manually configuring avatar initials, deterministic background hashing, and image fallbacks for every row.
+4. **ListTile Styling Limitations:** Standard `ListTile` lacks opinionated Material 3 card container variants (`elevated`, `filled`, `outlined`).
 
-## ✨ Features
+### Targeted Error Signatures & Defects
+* `"A RenderFlex overflowed by ... pixels on the right"`
+* Inconsistent card elevations, margins, and border radii across list views
+* Missing accessibility semantics for interactive contact items
 
-*   **Design Variants:** Switch between `EzContactCardVariant.elevated`, `filled`, `outlined`, or `none`.
-*   **Zero-Config Avatar:** Omitting `avatar` auto-generates initials and colors based on `name`.
-*   **Drop-in Compatibility:** Direct replacement for `ListTile` with `leading`, `trailing`, `title`, `dense`, and `enabled`.
-*   **Material 3 Ready:** Deep integration with `ThemeData`, `ColorScheme`, and `CardTheme`.
-*   **Defensive Overflow Prevention:** Gracefully truncates long names and subtitles with ellipsis.
-*   **Accessibility First:** Automated `Semantics` label and gesture actions for screen readers.
-*   **Interaction Ready:** Built-in `onTap`, `onLongPress`, and rounded ink ripple responses.
+## Technical Solution
 
-## 📦 Installation
+`EzContactCard` encapsulates contact row layout and design system enforcement into a single composable widget:
+
+1. **Material 3 Design Variants:** Built-in support for `EzContactCardVariant.elevated`, `filled`, `outlined`, and `none` pulling colors and shapes from `ThemeData`.
+2. **Automated Smart Avatar:** When omitting `avatar`, `EzContactCard` automatically constructs an `EzCircleAvatar` from `name` with deterministic color hashing and initials.
+3. **Defensive Layout:** Automatically constrains name, subtitle, and badges with `Expanded` and text ellipsis to prevent horizontal overflows.
+4. **Drop-in ListTile Parity:** Supports familiar properties (`leading`, `trailing`, `dense`, `enabled`, `onTap`, `onLongPress`).
+5. **Accessibility First:** Automatically computes screen-reader semantic labels and actions.
+
+## Installation
 
 ```shell
 flutter pub add ez_contact_card
 ```
 
-## 🚀 Usage
+## Quick Migration
+
+Replace standard `ListTile` with `EzContactCard`:
+
+```diff
+- ListTile(
+-   leading: CircleAvatar(child: Text('JD')),
+-   title: Text('Jane Doe'),
+-   subtitle: Text('Developer'),
+- )
++ EzContactCard(
++   name: 'Jane Doe',
++   subtitle: 'Developer',
++ )
+```
+
+## Usage Examples
 
 ### 1. Zero-Config (Auto-Avatar & Default Elevated Card)
-Just provide the name. The avatar, initials, background color, card elevation, and rounded corners are handled automatically.
+
+Just provide the name. The avatar, initials, background color, card elevation, and rounded corners are handled automatically:
+
 ```dart
 EzContactCard(
   name: 'Jane Doe',
-  onTap: () => _viewContact(context),
+  subtitle: 'Software Engineer',
+  onTap: () => _openContact(context),
 )
 ```
 
-### 2. Material 3 Card Variants
-Select from opinionated design variants:
+### 2. Material 3 Design Variants
+
 ```dart
-// Elevated card (Default - subtle shadow & surface container color)
+// Elevated card (default)
 EzContactCard(
   name: 'Elevated Contact',
   variant: EzContactCardVariant.elevated,
 )
 
-// Filled card (Flat surface container highest fill)
+// Filled card
 EzContactCard(
   name: 'Filled Contact',
   variant: EzContactCardVariant.filled,
 )
 
-// Outlined card (Subtle outline border with no shadow)
+// Outlined card
 EzContactCard(
   name: 'Outlined Contact',
   variant: EzContactCardVariant.outlined,
 )
 ```
 
-### 3. Drop-in ListTile Replacement (with Dense Mode)
-Use familiar `ListTile` properties like `leading`, `trailing`, and `dense`:
+### 3. Drop-in ListTile Compatibility (Dense Mode)
+
 ```dart
 EzContactCard(
-  leading: Icon(Icons.star, color: Colors.amber),
+  leading: const Icon(Icons.star, color: Colors.amber),
   name: 'Starred Contact',
   subtitle: 'Team Lead',
-  trailing: Icon(Icons.chevron_right),
+  trailing: const Icon(Icons.chevron_right),
   dense: true,
-  variant: EzContactCardVariant.outlined,
   onTap: () {},
 )
 ```
 
-### 4. With Action & Custom Avatar
-Pass any custom avatar widget (such as `EzCircleAvatar` with a photo) and a trailing action button:
+### 4. Custom Avatar & Action Button
+
 ```dart
 EzContactCard(
   name: 'Alice Johnson',
   subtitle: 'Product Manager',
-  avatar: EzCircleAvatar(
+  avatar: const EzCircleAvatar(
     name: 'Alice Johnson',
-    backgroundImage: NetworkImage('https://example.com/alice.jpg'),
+    radius: 20,
   ),
   tail: IconButton(
     icon: const Icon(Icons.phone),
-    onPressed: () => _call(context),
+    onPressed: () => _callContact(),
   ),
-  onTap: () => _viewProfile(context),
 )
 ```
 
-### 5. Disabled State
-Disable interaction and dim the visual presentation:
-```dart
-EzContactCard(
-  name: 'Archived User',
-  subtitle: 'Account deactivated',
-  enabled: false,
-  tail: const Icon(Icons.lock_outline),
-  onTap: () {},
-)
-```
+## API Reference
 
-### 6. Fully Styled (Custom Design System)
-Take complete control over borders, shadows, margins, and typography:
-```dart
-EzContactCard(
-  name: 'Admin User',
-  subtitle: 'System Administrator',
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: const [
-      BoxShadow(
-        color: Colors.black12,
-        blurRadius: 10,
-        offset: Offset(0, 4),
-      ),
-    ],
-    border: Border.all(color: Colors.grey.shade200),
-  ),
-  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-  contentPadding: const EdgeInsets.all(20),
-  nameStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-  subtitleStyle: const TextStyle(color: Colors.grey),
-)
-```
+| Property | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | `String` | *Required* | Contact name displayed as title and used for auto-avatar. |
+| `subtitle` | `String?` | `null` | Subtitle text displayed below name. |
+| `avatar` | `Widget?` | `null` | Custom avatar widget (auto-generates `EzCircleAvatar` if null). |
+| `leading` | `Widget?` | `null` | Widget placed before title/avatar (ListTile parity). |
+| `trailing` | `Widget?` | `null` | Widget placed at the end of the card (ListTile parity). |
+| `tail` | `Widget?` | `null` | Alias for `trailing`. |
+| `variant` | `EzContactCardVariant` | `elevated` | Material 3 visual variant (`elevated`, `filled`, `outlined`, `none`). |
+| `dense` | `bool` | `false` | Whether to compact padding and font sizing. |
+| `enabled` | `bool` | `true` | Whether the card is interactive. |
+| `onTap` | `VoidCallback?` | `null` | Tap callback with ink ripple. |
+| `onLongPress` | `VoidCallback?` | `null` | Long-press callback. |
 
-## 🤝 Contributing
+## Sponsoring & Support
 
-Contributions are welcome! Please feel free to open an issue or submit a pull request on [GitHub](https://github.com/Evgenii-Zinner/ez-contact-card).
+If this package saved you debugging time, consider supporting ongoing maintenance:
+* [GitHub Sponsors](https://github.com/sponsors/Evgenii-Zinner/)
+* [Thanks.dev](https://thanks.dev/u/gh/evgenii-zinner)
+* [Buy Me a Coffee](https://buymeacoffee.com/evgeniizinner)
 
-## 📜 License
+## License
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License. See [LICENSE](LICENSE) for details.
